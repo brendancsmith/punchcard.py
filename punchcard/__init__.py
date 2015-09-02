@@ -42,20 +42,15 @@ OR OTHER DEALINGS IN THE SOFTWARE.
 
 import time
 import sys
-import os
-import subprocess
 from optparse import OptionParser
 from collections import defaultdict
 
 class TimeHistory(object):
 
-    def __init__(self, options):
+    def __init__(self):
         self.h = defaultdict(lambda: 0)
-        self.options = options
 
-    def add_logs(self):
-        timestamps  = sys.stdin 
-
+    def add_logs(self, timestamps):
         for line in timestamps:
             #Blunt method for ignoring lines that aren't timestamps
             try: 
@@ -69,7 +64,7 @@ class TimeHistory(object):
                 sys.stderr.write("%02d %d - %s\n"
                                  % (h, d, self.h["%d %02d" % (d, h)]))
 
-    def to_gchart(self):
+    def to_gchart(self, filename):
         from pygooglechart import ScatterChart
         chart = ScatterChart(800, 300, x_range=(-1, 24), y_range=(-1, 7))
 
@@ -94,23 +89,12 @@ class TimeHistory(object):
         chart.set_axis_labels('y', [''] + [day_names[n] for n in days] + [''])
 
         chart.add_marker(1, 1.0, 'o', '333333', 25)
-        
-        chart.download(self.options.filename)
+
+        chart.download(filename)
         return chart.get_url()
 
-if __name__ == '__main__':
-    parser = OptionParser()
-    parser.usage = "cat data | %prog [options]"
-    parser.add_option("-f", "--file", dest="filename",
-                      help="minimum value for graph", default='punchcard.png')
-    
-    (options, args) = parser.parse_args()
-    if sys.stdin.isatty():
-        # if isatty() that means it's run without anything piped into it
-        parser.print_usage()
-        print "for more help use --help"
-        sys.exit(1)
-    th = TimeHistory(options)
-    th.add_logs()
-    #th.dump()
-    th.to_gchart()
+
+def make_punchcard(timestamps, filename):
+    th = TimeHistory()
+    th.add_logs(timestamps)
+    return th.to_gchart(filename)
