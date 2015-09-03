@@ -42,26 +42,17 @@ OR OTHER DEALINGS IN THE SOFTWARE.
 
 import time
 import sys
-import os
-import subprocess
-from optparse import OptionParser
 from collections import defaultdict
+
 
 class TimeHistory(object):
 
-    def __init__(self, options):
+    def __init__(self):
         self.h = defaultdict(lambda: 0)
-        self.options = options
 
-    def add_logs(self):
-        timestamps  = sys.stdin 
-
-        for line in timestamps:
-            #Blunt method for ignoring lines that aren't timestamps
-            try: 
-                self.h[time.strftime("%w %H", time.localtime(float(line.strip())))] += 1
-            except:
-                pass
+    def add_logs(self, datetimes):
+        for dt in datetimes:
+            self.h[time.strftime("%w %H", dt.timetuple())] += 1
 
     def dump(self):
         for h in range(24):
@@ -69,48 +60,39 @@ class TimeHistory(object):
                 sys.stderr.write("%02d %d - %s\n"
                                  % (h, d, self.h["%d %02d" % (d, h)]))
 
-    def to_gchart(self):
+    def to_gchart(self, filename):
         from pygooglechart import ScatterChart
         chart = ScatterChart(800, 300, x_range=(-1, 24), y_range=(-1, 7))
 
         chart.add_data([(h % 24) for h in range(24 * 8)])
 
-        d=[]
+        d = []
         for i in range(8):
             d.extend([i] * 24)
         chart.add_data(d)
 
         day_names = "Sun Mon Tue Wed Thu Fri Sat".split(" ")
-        days = (0, 6, 5, 4, 3, 2, 1)
+        days = (6, 5, 4, 3, 2, 1, 0)
 
-        sizes=[]
+        sizes = []
         for d in days:
             sizes.extend([self.h["%d %02d" % (d, h)] for h in range(24)])
         sizes.extend([0] * 24)
         chart.add_data(sizes)
 
-        #Easier to manually set the x label for the 12am/12pm labels 
+        # Easier to manually set the x label for the 12am/12pm labels
         chart.set_axis_labels('x', ['|12am|1|2|3|4|5|6|7|8|9|10|11|12pm|1|2|3|4|5|6|7|8|9|10|11|'])
         chart.set_axis_labels('y', [''] + [day_names[n] for n in days] + [''])
 
         chart.add_marker(1, 1.0, 'o', '333333', 25)
-        
-        chart.download(self.options.filename)
+
+        if filename:
+            chart.download(filename)
+
         return chart.get_url()
 
-if __name__ == '__main__':
-    parser = OptionParser()
-    parser.usage = "cat data | %prog [options]"
-    parser.add_option("-f", "--file", dest="filename",
-                      help="minimum value for graph", default='punchcard.png')
-    
-    (options, args) = parser.parse_args()
-    if sys.stdin.isatty():
-        # if isatty() that means it's run without anything piped into it
-        parser.print_usage()
-        print "for more help use --help"
-        sys.exit(1)
-    th = TimeHistory(options)
-    th.add_logs()
-    #th.dump()
-    th.to_gchart()
+
+def make_punchcard(datetimes, filename=None):
+    th = TimeHistory()
+    th.add_logs(datetimes)
+    return th.to_gchart(filename)

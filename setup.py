@@ -16,5 +16,5 @@ setup(name='punchcard.py',
             ],
       download_url="https://github.com/aaronjorbin/punchcard.py/archive/%s.zip" % version,
       install_requires = [ "pygooglechart" ],
-      scripts = ['punchcard/punchcard.py']
+      packages=["punchcard"]
      )
