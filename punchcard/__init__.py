@@ -74,7 +74,7 @@ class TimeHistory(object):
         day_names = "Sun Mon Tue Wed Thu Fri Sat".split(" ")
         days = (6, 5, 4, 3, 2, 1, 0)
 
-        sizes=[]
+        sizes = []
         for d in days:
             sizes.extend([self.h["%d %02d" % (d, h)] for h in range(24)])
         sizes.extend([0] * 24)
@@ -86,11 +86,13 @@ class TimeHistory(object):
 
         chart.add_marker(1, 1.0, 'o', '333333', 25)
 
-        chart.download(filename)
+        if filename:
+            chart.download(filename)
+
         return chart.get_url()
 
 
-def make_punchcard(datetimes, filename):
+def make_punchcard(datetimes, filename=None):
     th = TimeHistory()
     th.add_logs(datetimes)
     return th.to_gchart(filename)
