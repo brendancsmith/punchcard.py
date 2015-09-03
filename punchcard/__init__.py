@@ -42,21 +42,17 @@ OR OTHER DEALINGS IN THE SOFTWARE.
 
 import time
 import sys
-from optparse import OptionParser
 from collections import defaultdict
+
 
 class TimeHistory(object):
 
     def __init__(self):
         self.h = defaultdict(lambda: 0)
 
-    def add_logs(self, timestamps):
-        for line in timestamps:
-            #Blunt method for ignoring lines that aren't timestamps
-            try: 
-                self.h[time.strftime("%w %H", time.localtime(float(line.strip())))] += 1
-            except:
-                pass
+    def add_logs(self, datetimes):
+        for dt in datetimes:
+            self.h[time.strftime("%w %H", dt.timetuple())] += 1
 
     def dump(self):
         for h in range(24):
@@ -70,13 +66,13 @@ class TimeHistory(object):
 
         chart.add_data([(h % 24) for h in range(24 * 8)])
 
-        d=[]
+        d = []
         for i in range(8):
             d.extend([i] * 24)
         chart.add_data(d)
 
         day_names = "Sun Mon Tue Wed Thu Fri Sat".split(" ")
-        days = (0, 6, 5, 4, 3, 2, 1)
+        days = (6, 5, 4, 3, 2, 1, 0)
 
         sizes=[]
         for d in days:
@@ -84,7 +80,7 @@ class TimeHistory(object):
         sizes.extend([0] * 24)
         chart.add_data(sizes)
 
-        #Easier to manually set the x label for the 12am/12pm labels 
+        # Easier to manually set the x label for the 12am/12pm labels
         chart.set_axis_labels('x', ['|12am|1|2|3|4|5|6|7|8|9|10|11|12pm|1|2|3|4|5|6|7|8|9|10|11|'])
         chart.set_axis_labels('y', [''] + [day_names[n] for n in days] + [''])
 
@@ -94,7 +90,7 @@ class TimeHistory(object):
         return chart.get_url()
 
 
-def make_punchcard(timestamps, filename):
+def make_punchcard(datetimes, filename):
     th = TimeHistory()
-    th.add_logs(timestamps)
+    th.add_logs(datetimes)
     return th.to_gchart(filename)
